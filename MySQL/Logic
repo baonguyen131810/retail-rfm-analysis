@@ -1,0 +1,30 @@
+# RFM Segmentation Decisions
+
+## Why 5 tiers for Monetary instead of 4
+Standard RFM uses equal quartiles (1–4). However, the data showed a 
+significant gap between the top quartile and the rest — the jump from 
+Q3 to Q4 in monetary value was extremely large, signaling a small group 
+of exceptionally high spenders. A 90th percentile split was added to 
+isolate this group (M=5, labeled Whale) from regular high spenders (M=4, VIP).
+This distinction matters strategically — Whales require different treatment 
+than VIPs despite both being high-value.
+
+## Why Frequency = orders per month, not total orders
+Total order count unfairly rewards customers who have simply been 
+around longer. A customer with 10 orders over 5 years scores the 
+same as one with 10 orders over 1 year. Normalizing by tenure 
+(months since first order) gives a more accurate picture of 
+purchasing behavior. Tradeoff: newer customers with short tenure 
+can score artificially high (acknowledged limitation_.
+
+## Segment definitions
+8 segments defined by R, F, M score combinations:
+- Whale: R≥3, F≥3, M=5
+- VIP: R≥3, F≥3, M=3–4
+- Big Spender: R≥3, F≤2, M=5
+- Loyal Customer: R≥3, decent F and M
+- Potential Loyal: R≥3, lower F and M
+- New Customer: R=4, F and M in {1,2}
+- At Risk: R=2, F≥3
+- Lapsing: R=2, F≤2, M≥3
+- Hibernated: remaining low R customers
