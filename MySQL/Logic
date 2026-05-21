@@ -17,17 +17,16 @@ same as one with 10 orders over 1 year. Normalizing by tenure
 purchasing behavior. Tradeoff: newer customers with short tenure 
 can score artificially high (acknowledged limitation).
 
-## Segment definitions
-8 segments defined by R, F, M score combinations:
+## 8 segments defined by R, F, M score combinations:
 - Whale: R≥3, F≥3, M=5
 - VIP: R≥3, F≥3, M=3–4
 - Big Spender: R≥3, F≤2, M=5
-- Loyal Customer: R≥3, decent F and M
-- Potential Loyal: R≥3, lower F and M
-- New Customer: R=4, F and M in {1,2}
-- At Risk: R=2, F≥3
+- Loyal Customer: R≥3, F≥2, M≥2 (excluding M=5 which goes to Whale/Big Spender)
+- Potential Loyal: R≥3, F≤3, M≤2 (recently active but low spend and frequency)
+- New Customer: R=4, F≤2, M≤2
+- At Risk: R=2, F≥3 (any M)
 - Lapsing: R=2, F≤2, M≥3
-- Hibernated: remaining low R customers
+- Hibernated: R≤2, F≤2, M≤2
 
 ## Cohort Retention Analysis
 Retention is measured as a cohort analysis — customers are grouped by 
