@@ -36,13 +36,13 @@ dashboard with DAX measures.
 ## Key Findings
 
 **Revenue is dangerously concentrated**
-Whale and VIP customers combined represent only 25% of the customer base but 
-generate ~49% of total revenue (~$27.4M) - Top priority - have regular inactivity
+Whale and VIP customers combined represent only 18% of the customer base but 
+generate ~38.6% of total revenue (~$21.5M) - Top priority - have regular inactivity
 alarm to reachout. Losing even a small group of this segment can cost the company immensely.
 
 **A large dormant base represents recoverable value**
-34.7% of all customers (4,121 people) are Hibernated — inactive for an average 
-of 35 months but with $11.3M in historical spend, the highest of all segment. 
+38.18% of all customers (4,539 people) are Hibernated — inactive for an average 
+of 35 months but with $11.9M in historical spend, the highest of all segment. 
 special offers, new drops introduction and other engagement stategy are needed 
 before they are permanently lost.
 
@@ -58,7 +58,22 @@ their last order. Beyond that window, recovery drops sharply. Hence, it will be
 best to leverage that time before they slide into hibernation.
 
 **Online is underutilized**
-Online channel accounts for only ~20% of revenue ($11.4M vs $44.4M in-store) 
-despite identical profit margins (~55%). Given that physical retail was the 
-prime victim during the 2020 decline, online could be the way to save and 
-grow the business.
+Online channel accounts for only ~20% of revenue ($11.4M vs $44.4M in-store). 
+Given that physical retail was the prime victim during the 2020 decline, 
+online could be the way to save and grow the business.
+
+**Market resilience varies significantly**
+Australia and Italy suffered the steepest customer losses in 2020 — both new 
+and returning customers declined sharply. France showed the most resilience 
+with the smallest drop in both new (-48%) and returning (-10%) customers during 
+the same period, but this could be due to the market's small amount of customers.
+
+**Product margin opportunity is underutilized**
+Computers leads revenue at $19.3M but carries only average profit margin (~54%). 
+Music, Movies & Audio Books and Cameras carry the highest margins (~57%) but 
+generate significantly lower revenue — high-margin categories that remain 
+underutilized relative to their potential.
+
+## Tools
+- **MySQL** — data cleaning, RFM scoring, cohort retention analysis
+- **Power BI** — dashboard and DAX measures
