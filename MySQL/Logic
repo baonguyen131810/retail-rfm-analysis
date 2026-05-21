@@ -3,7 +3,7 @@
 ## Why 5 tiers for Monetary instead of 4
 Standard RFM uses equal quartiles (1–4). However, the data showed a 
 significant gap between the top quartile and the rest — the jump from 
-Q3 to Q4 in monetary value was extremely large, signaling a small group 
+Q3 to Q4 in monetary value was disproportionally large, signaling a small group 
 of exceptionally high spenders. A 90th percentile split was added to 
 isolate this group (M=5, labeled Whale) from regular high spenders (M=4, VIP).
 This distinction matters strategically — Whales require different treatment 
@@ -15,7 +15,7 @@ around longer. A customer with 10 orders over 5 years scores the
 same as one with 10 orders over 1 year. Normalizing by tenure 
 (months since first order) gives a more accurate picture of 
 purchasing behavior. Tradeoff: newer customers with short tenure 
-can score artificially high (acknowledged limitation_.
+can score artificially high (acknowledged limitation).
 
 ## Segment definitions
 8 segments defined by R, F, M score combinations:
@@ -28,3 +28,18 @@ can score artificially high (acknowledged limitation_.
 - At Risk: R=2, F≥3
 - Lapsing: R=2, F≤2, M≥3
 - Hibernated: remaining low R customers
+
+## Cohort Retention Analysis
+Retention is measured as a cohort analysis — customers are grouped by 
+their first purchase month and tracked month by month to see how many 
+return and how long do they take to return. This gives a cleaner picture 
+of true loyalty behavior rather than a simple returning vs new customer count.
+
+Month 0 = the cohort's first purchase month. Month 1 = customers who 
+returned 1 month after first purchase, and so on. Retention rate = 
+returning customers in month X / total customers in that cohort.
+
+New vs Returning classification is separate from cohort retention — 
+a customer is tagged New in the month of their very first ever purchase, 
+Returning in every subsequent month they order. These two metrics answer 
+different questions and should not be compared directly.
