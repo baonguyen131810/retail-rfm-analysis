@@ -18,25 +18,29 @@ select *
 
 -- multible rows with null delivery_date, in-store order, no need to clean these column, can add a column to classify order
 -- Add order_type column to make in-store vs online
--- order and delivery date is also formaet wrong 
+-- order and delivery date is also format wrrong
+-- assuming online order is place by customers in their country, use to analyse online/in-store order
 
 drop table if exists cleaned_sales;
 create table cleaned_sales as 
-select order_number,
-       line_item,
-       str_to_date(order_date, '%Y-%m-%d') AS order_date,
-       str_to_date(delivery_date, '%Y-%m-%d') AS delivery_date,
-       customer_key,
-       store_key,
-       product_key,
-       quantity,
+select s.order_number,
+       s.line_item,
+       str_to_date(s.order_date, '%Y-%m-%d') AS order_date,
+       str_to_date(s.delivery_date, '%Y-%m-%d') AS delivery_date,
+       s.customer_key,
+       s.store_key,
+       s.product_key,
+       s.quantity,
     case 
-      when store_key = 0 then 'Online'
+      when s.store_key = 0 then 'Online'
       else 'In-store'
-    end as order_type  
+    end as order_type,
+       c.country
   from sales s
+  left join customers c on s.customer_key = c.customer_key
 ;
-
+CREATE INDEX idx_sales_customer ON sales(customer_key);
+CREATE INDEX idx_customers_customer ON customers(customer_key);
 -- Validate the delivery_date
 select * 
   from cleaned_sales s
@@ -212,9 +216,11 @@ having dup_rows > 1
 drop table if exists revenue;
 create table revenue as -- money earned from each line_item from each order
 select s.customer_key,
-       s.order_number, 
+       s.order_number,
+       s.country,
        s.line_item,
        s.order_date,
+       s.order_type,
        s.product_key, 
        p.price, 
        p.cost,
@@ -417,7 +423,7 @@ select
     m.first_month,
     date_format(s.order_date, '%Y-%m-01') as order_month,
     timestampdiff(month, m.first_month, date_format(s.order_date, '%Y-%m-01')) as month_back_count
-from 1stmonth m
+from firstmonth m
 join cleaned_sales s on m.customer_key = s.customer_key
 group by 1, 2, 3
 ;
@@ -434,18 +440,28 @@ group by 1, 2
 order by 1, 2
 ;
 
--- retention rate from customers 1st order in months
-drop view if exists retention_rate;
-create view retention_rate as
-select
-    c1.first_month,
-    c1.month_back_count,
-    c1.customers,
-    c2.customers as initial_count,
-    round(100.0 * c1.customers / c2.customers, 2) as retention_rate
-from cus_count c1
-join cus_count c2
-    on c1.first_month = c2.first_month 
-    and c2.month_back_count = 0
-;
+-- counting new vs returning customer by month (grouping at monthly level, those orderd multiple times in same month count as 1, reduce granular)
+drop table if exists returnee;
+create table returnee as
+select cs.customer_key, date_format(cs.order_date, '%Y-%m-01') order_month,  
+    case 
+    	when date_format(cs.order_date, '%Y-%m-01') = f.first_month then 'New'
+    	else 'Return'
+    end as 'type',
+    cs.order_number,
+    cs.country, cs.order_type
+  from cleaned_sales cs 
+  left join firstmonth f on f.customer_key = cs.customer_key 
+  group by 1,2, f.first_month; -- 1 customer, unique start month and unique order months
+
+-- double check result
+select r.customer_key
+  from returnee r 
+ where r.`type` = 'new'
+ group by 1 
+having count(r.`type` ) = 2
+-- no worng record 
+
+
+ 
   
