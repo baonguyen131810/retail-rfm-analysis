@@ -2,7 +2,7 @@
 -- I. data cleaning
 -- =========================================================================
 -- import data from source, checking for all null value
--- using 31/3/2021 as the analysis date since last date on data is in 2/2021
+-- using 1/4/2021 or quarter 2 of 2021 as the analysis date since last date on data is in 2/2021
 -- 1. SALES
 select *
   from sales
@@ -35,12 +35,17 @@ select s.order_number,
       when s.store_key = 0 then 'Online'
       else 'In-store'
     end as order_type,
-       c.country
+       c.country,
+    case
+         when month(s.order_date) <= 3  then str_to_date(concat(year(s.order_date), '-01-01'), '%Y-%m-%d')
+         when month(s.order_date) <= 6  then str_to_date(concat(year(s.order_date), '-04-01'), '%Y-%m-%d')
+         when month(s.order_date) <= 9  then str_to_date(concat(year(s.order_date), '-07-01'), '%Y-%m-%d')
+         else str_to_date(concat(year(s.order_date), '-10-01'), '%Y-%m-%d')
+    end as order_quarter
   from sales s
-  left join customers c on s.customer_key = c.customer_key
+  left join customers c on c.customer_key = s.customer_key
 ;
-CREATE INDEX idx_sales_customer ON sales(customer_key);
-CREATE INDEX idx_customers_customer ON customers(customer_key);
+
 -- Validate the delivery_date
 select * 
   from cleaned_sales s
@@ -232,15 +237,20 @@ select s.customer_key,
   left join cleaned_product p on p.product_key = s.product_key
 ;
 
+select customer_key, timestampdiff(month,max(cs.order_date),'2021-04-01')
+  from cleaned_sales cs
+ where cs.customer_key = 301
+
 -- 2. RFM features: recency, frequency and monetary.
 drop table if exists cus_rfm;
 create table cus_rfm as
-select s.customer_key, timestampdiff(month,max(s.order_date),'2021-03-31') recency,
+select s.customer_key, 
+      floor(timestampdiff(month,max(s.order_quarter),'2021-04-01') /3) recency,
       round(
-            (count(distinct s.order_number)/timestampdiff(month,min(s.order_date),'2021-03-31'))
+            (count(distinct s.order_number)/(floor(timestampdiff(month,min(s.order_quarter),'2021-04-01') /3) ))
             ,2) frequency,
       sum(r.revenue_usd) monetary_usd,
-      count(distinct s.order_number) total_order
+      floor(timestampdiff(month, min(s.order_quarter), max(s.order_quarter)) / 3) as active_span
  from cleaned_sales s 
  join revenue r 
    on s.order_number = r.order_number
@@ -248,13 +258,13 @@ select s.customer_key, timestampdiff(month,max(s.order_date),'2021-03-31') recen
 group by 1
 ;
 
--- 3. Quartile scoring
+-- 3. quintile scoring
 drop table if exists iqr;
-create table iqr as -- segment each new features into 4 quatiles 
+create table iqr as -- segment each new features into 5 quatiles 
 select c.customer_key, recency r, frequency f, monetary_usd m,
-      ntile(4) over (order by recency desc) as iqr_r, -- split into 4 equal quatiles in descending order by counting (smaller r = more recent = better)
-      ntile(4) over (order by frequency asc) as iqr_f, -- split into 4 equal quatiles in ascending order by counting
-      ntile(4) over (order by monetary_usd asc) as iqr_m -- split into 4 equal quatiles in ascending order by counting 
+      ntile(5) over (order by recency desc) as iqr_r, -- split into 5 equal quatiles in descending order by counting (smaller r = more recent = better)
+      ntile(5) over (order by frequency asc) as iqr_f, -- split into 5 equal quatiles in ascending order by counting
+      ntile(5) over (order by monetary_usd asc) as iqr_m -- split into 5 equal quatiles in ascending order by counting 
 from cus_rfm c
 ;
 
@@ -270,7 +280,7 @@ m decimal(10,2)
 ;
 
 insert into iqr_bounds (ntiles) values
-(0),(1),(2),(3),(4); -- add value for ntiles, 0 for starting value, the rest represents each quatiles
+(0),(1),(2),(3),(4),(5); -- add value for ntiles, 0 for starting value, the rest represents each quatiles
 
 update iqr_bounds ib -- update the table by getting each features' boundaries in a window functions' result from table iqr 
 join (
@@ -306,46 +316,37 @@ set ib.r = rb.r,
 ;
 -- inspections
 select * from iqr_bounds ib;
--- tile 4 of f and m seems to have a much bigger gap to tile 3, compare to the gaps between other tiles
--- signal skewed distribution especially for monetary 
 
-
+-- using fixed thresholds instead of ntile() because of skewed recency distribution
+-- using fixed thresholds helps ensure each score reflects a meaningful business reality
+-- 1-2 quarters (within last 6 months) = truly recent   
+-- 3-6 quarters (6 months to 1.5 year) = cooling of
+-- 7-10 quarters (1.5 to 2.5 years) = disengage
+-- 11-14 quarters (2.5 to 3.5 years) = at risk
+-- 15+ quarters (3+ years) = dormant
 
 -- 5. RFM scoring 
--- for monetary tile 4, spilt in quantile 90 to distinguish the big spender (whale)
--- First, compute some data point in tile 4 of monetary
-select quantile, min(m), max(m)
-  from (select c.monetary_usd m,
-               ntile(10) over (order by monetary_usd) as 'quantile'
-          from cus_rfm c 
-       ) q
- where quantile >= 8 
- group by quantile
-;
-
--- the jump from group 9 and 10 is way more significant => 9 (or 90% quantile) will be the splitting point
--- max(m) of 9 is $11059.96
--- segement each features by their q1, q2 and q3 from iqr_bounds and other boundaries
--- add customer lifetime value for visual later
 drop table if exists points; 
 create table points as
 select
   c.customer_key, c.recency, c.frequency,c.monetary_usd, 
   cc.gender, cc.country, -- for filtering and analyzing
   case    
-    when c.recency >= (select r from iqr_bounds where ntiles = 1) then 1 
-    when c.recency >= (select r from iqr_bounds where ntiles = 2) then 2
-    when c.recency >= (select r from iqr_bounds where ntiles = 3) then 3
-    else 4
-  end as r,
+    when c.recency <= 2  then 5    
+    when c.recency <= 6  then 4    
+    when c.recency <= 10  then 3   
+    when c.recency <= 14 then 2   
+    else 1
+end as r,
    case  
+	when c.frequency > (select f from iqr_bounds where ntiles = 4) then 5
     when c.frequency > (select f from iqr_bounds where ntiles = 3) then 4
     when c.frequency > (select f from iqr_bounds where ntiles = 2) then 3
     when c.frequency > (select f from iqr_bounds where ntiles = 1) then 2
     else 1
   end as  f,
   case 
-	when c.monetary_usd > 11059.96 then 5
+	when c.monetary_usd > (select m from iqr_bounds where ntiles = 4) then 5
     when c.monetary_usd > (select m from iqr_bounds where ntiles = 3) then 4
     when c.monetary_usd > (select m from iqr_bounds where ntiles = 2) then 3
     when c.monetary_usd > (select m from iqr_bounds where ntiles = 1) then 2
@@ -354,90 +355,106 @@ select
   from cus_rfm c
   left join cleaned_cus cc on cc.customer_key = c.customer_key
 ;
--- comnine the points as a rfm code for segmentation
 drop table if exists rfm_point;
 create table rfm_point as
-select p.customer_key, concat(r,f,m) rfm
-from points p
-;
+select p.customer_key, concat(r,f,m) as rfm
+  from points p
+ ;
 
 -- 6. segmentation
--- divide by reasonable point conditioning
--- all 80 segments: 
--- Whale(r>=3, f>= 3, m=5): Very recent, frequent, top 10% of spenders. Most valuable.
--- VIP(r>=3, f>= 3, m=3-4): Very recent, frequent, high spend (not top 10%).
--- Big Spender(r>=3, f<= 2, m=5): Recent, infrequent, but top-10% spend. Likely occasional big-ticket.
--- Loyal(r>=3, decent f,m): Consistent, reliable buyers with decent spend.
--- Potential(r>=3, moderate f,m): Recently active, showing loyalty signals — needs a nudge.
--- New Customer(r = 4, f,m in {1,2}): Bought very recently, not enough history to classify yet.
--- At Risk(r=2, f>=3): Was buying frequently or spending heavily, now slowing.
--- Lapsing(r=2, f<=2, m>=3): low/Medium recency, low frequency, historically solid spend.
--- Hibernated (r=1 or r=2 with low f,m): Long inactive. Broad reactivation campaign territory.
-
-
+-- 125 combination divide in 8 groups
+-- Champion: best in all 3 
+-- Loyal Customers: consistent but not top spender
+-- New Customers: very recent, no history, low spend
+-- Promising: quite recent, no history but decent spend
+-- Potential Loyal: recent, relatively frequent, decent spending
+-- Must Keep: high value but hasn't been active, proven long history
+-- At Risk: good value customer, fading with meaningful purchase history
+-- Hibernating: dormant, low value or short history 
 drop view if exists segmentation;
 create view segmentation as 
-select customer_key, rfm,
+select p.customer_key, rfm,
       case
-        when rfm in ('335','345','435','445') then 'Whale'
-        when rfm in ('334','343','344','434','443','444') then 'VIP'
-        when rfm in ('315','325','415','425') then 'Big Spender'
-        when rfm in ('323','324','332','333','342',
-                     '423','424','432','433','442') then 'Loyal Customer'
-        when rfm in ('311','312','313','314',
-                      '321','322','331','341',
-                      '413','414','431','441') then 'Potential Loyal'
-        when rfm in ('411','412','421','422') then 'New Customer'
-        when rfm in ('231','232','233','234','235',
-                     '241','242','243','244','245') then 'At Risk'
-        when rfm in ('213','214','215',
-                      '223','224','225') then 'Lapsing'
-        when rfm in ('111','112','113','114','115',
-                     '121','122','123','124','125',
-                     '131','132','133','134','135',
-                     '141','142','143','144','145',
-                     '211','212','221','222') then 'Hibernated'
-        else 'Uncategorized'
-       end as segment
-from rfm_point
+	    when r=5 and f>=4 and m>=4 then 'Champions' 
+        when r>=4 and f>=3 and m >=3 then 'Loyal Customers' 
+        when r>=4 and f>=2 then 'Potential Loyal'
+        when c.active_span=0 and m>=3 and r>=3 then 'Promising'
+        when c.active_span=0 and r>=3 then 'New Customers' 
+        when r in (2,3) and f >= 4 and m>=4 and c.active_span >=8 then 'Must Keep' 
+        when r in (2,3) and m>=3 and c.active_span >=4 then 'At Risk'
+        else 'Hibernating' 
+      end as segment
+from points p
+join cus_rfm c on c.customer_key = p.customer_key
+join rfm_point rp on rp.customer_key = p.customer_key
 ;
+
+select s.segment  , count(*)
+  from segmentation s 
+ group by s.segment
+ 
 
 -- =========================================================================
 -- III. cohort for retention rate
 -- =========================================================================
--- each customers' 1st order month
-drop table if exists firstmonth;
-create table firstmonth as
+-- each customers' 1st order quarter
+drop table if exists firstquarter;
+create table firstquarter as
 select 
     customer_key,
-    date_format(min(order_date), '%Y-%m-01') as first_month
+    min(order_quarter) as first_quarter
   from cleaned_sales
  group by customer_key
 ;
 
--- months until next order
-drop table if exists backmonth;
-create table backmonth as
+-- quarters until next order
+drop table if exists backquarter;
+create table backquarter as
 select 
-    m.customer_key,
-    m.first_month,
-    date_format(s.order_date, '%Y-%m-01') as order_month,
-    timestampdiff(month, m.first_month, date_format(s.order_date, '%Y-%m-01')) as month_back_count
-from firstmonth m
-join cleaned_sales s on m.customer_key = s.customer_key
+    q.customer_key,
+    q.first_quarter,
+    s.order_quarter,
+    floor(timestampdiff(month, q.first_quarter, date_format(s.order_quarter, '%Y-%m-01')) / 3) as qrter_back_count
+from firstquarter q
+join cleaned_sales s on q.customer_key = s.customer_key
 group by 1, 2, 3
 ;
 
--- number of customers coming back after x months from their 1st order month
+-- add in segment for analyzing
+drop table if exists back_seg;
+create table back_seg as
+select b.*, s.segment 
+  from backquarter b 
+  join segmentation s on s.customer_key =b.customer_key 
+;
+
+-- number of customers coming back after x quarters from their 1st order month
 drop table if exists cus_count;
 create table cus_count as
-select
-    first_month,
-    month_back_count,
+ select
+    first_quarter,
+    qrter_back_count,
+    segment,
     count(distinct customer_key) as customers
-from backmonth m
-group by 1, 2
+  from back_seg
+ group by 1, 2
 order by 1, 2
+;
+
+drop view if exists retention_rate;
+create view retention_rate as
+select c1.first_quarter, 
+       c1.qrter_back_count,
+       c1.segment,
+       c1.customers, 
+       c2.customers as initial_count,
+       round(100.0 * c1.customers / c2.customers, 2) as retention_rate
+  from cus_count c1
+  join cus_count c2 on c1.first_quarter = c2.first_quarter               
+                  and c2.qrter_back_count = 0 
+                  and c1.qrter_back_count <> 0
+  group by 1,2,3
+  order by 1,2
 ;
 
 -- counting new vs returning customer by month (grouping at monthly level, those orderd multiple times in same month count as 1, reduce granular)
@@ -449,10 +466,13 @@ select cs.customer_key, date_format(cs.order_date, '%Y-%m-01') order_month,
     	else 'Return'
     end as 'type',
     cs.order_number,
-    cs.country, cs.order_type
+    cs.country
   from cleaned_sales cs 
-  left join firstmonth f on f.customer_key = cs.customer_key 
-  group by 1,2, f.first_month; -- 1 customer, unique start month and unique order months
+  left join (select s.customer_key, date_format(min(s.order_date), '%Y-%m-01') first_month
+               from cleaned_sales s
+              group by 1
+            ) f on f.customer_key = cs.customer_key 
+  group by 1,2; -- 1 customer, 1 unique order months
 
 -- double check result
 select r.customer_key
