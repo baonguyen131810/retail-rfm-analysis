@@ -21,13 +21,13 @@ using behavior-based approach to score each customer on three metrics:
 - **Recency** — how recently they purchased
 - **Frequency** — how often they purchase relative to their tenure
 - **Monetary** — how much they have spent in total
+- **Active Span** — quarters between first and last order, extra supporting
+                    metrics to distinguish tuely new customers.
 
-Scores were computed in MySQL using quartile-based scoring, with an additional 
-tier added for the top 10% of spenders to isolate the highest-value group. 
-Customers were then grouped into 8 segments based on their combined RFM profile.
+All metrics is computed quarterly, scores were computed in MySQL using quintile-based scoring, with an exception of Recency due heavily skewed ditribution, affecting the business logic to segment customer. Customers were then grouped into 8 segments based on their combined RFM profile.
 
 A cohort retention analysis was also built to track how well the business retains 
-customers month-over-month from their first purchase, giving an extra layer 
+customers quarter-over-quarter from their first purchase, giving an extra layer 
 into customer loyalty beyond just segmentation.
 
 The full pipeline runs from raw CSV → MySQL cleaning and processing → Power BI 
@@ -35,38 +35,43 @@ dashboard with DAX measures.
 
 ## Key Findings
 
-**Revenue is dangerously concentrated**
-Whale and VIP customers combined represent only 18% of the customer base but 
-generate ~38.6% of total revenue (~$21.5M) - Top priority - have regular inactivity
-alarm to reachout. Losing even a small group of this segment can cost the company immensely.
+**Revenue is concentrated in a small active base**
+Loyal Customers represent ~28% of the customer base 
+but generate ~44% of total revenue ($24.6M). Losing even a small portion of 
+this group has outsized revenue impact. Regular recency monitoring and 
+proactive outreach every 2 quarters is critical to protect this base.
 
 **A large dormant base represents recoverable value**
-38.18% of all customers (4,539 people) are Hibernated — inactive for an average 
-of 35 months but with $11.9M in historical spend, the highest of all segment. 
-special offers, new drops introduction and other engagement stategy are needed 
-before they are permanently lost.
+Hibernating customers make up the 2nd largest segment (3,135 customers) with 
+$9.1M in historical spend — all currently inactive. Must Keep (135 customers) 
+is smaller but carries the highest average spend alongside Champions, making 
+it the highest ROI recovery target despite its size.
 
-**The business is bleeding new customers without realizing it**
-97% of new customers do not return in their first month. Month-1 retention 
-averages only 3.21%, which means the business is continuously 
-acquiring customers it cannot keep — a growth model that does not compound.
+**The business cannot retain new customers**
+92% of new customers do not return in their first quarter. Average 1-quarter 
+retention is only 7.75% — meaning the business continuously acquires customers 
+it cannot keep. This is a structural retention failure that predates 2020 and 
+exists across all cohort years, not just a pandemic effect.
 
-**At Risk customers have a narrow recovery window**
-Customers in the At Risk segment were previously frequent buyers who have since 
-slowed down. Retention data shows they are most responsive within 6 months of 
-their last order. Beyond that window, recovery drops sharply. Hence, it will be
-best to leverage that time before they slide into hibernation.
+**At Risk customers have a recoverable but time-sensitive window**
+At Risk customers show only 2.82% retention in quarter 1 but rise to 7–11% 
+from quarters 2–4. This means immediate outreach is ineffective — the optimal 
+intervention window is 2–4 quarters after last purchase, before they slide 
+permanently into Hibernating.
 
-**Online is underutilized**
-Online channel accounts for only ~20% of revenue ($11.4M vs $44.4M in-store). 
-Given that physical retail was the prime victim during the 2020 decline, 
-online could be the way to save and grow the business.
+**Online is critically underutilized**
+Online revenue accounts for a small fraction of total revenue. Given that 
+physical retail was the primary victim of the 2020 decline, online represents 
+the most actionable channel for both customer acquisition and retention — 
+particularly for younger demographics and markets like Australia where new 
+customer proportion is highest.
 
 **Market resilience varies significantly**
-Australia and Italy suffered the steepest customer losses in 2020 — both new 
-and returning customers declined sharply. France showed the most resilience 
-with the smallest drop in both new (-48%) and returning (-10%) customers during 
-the same period, but this could be due to the market's small amount of customers.
+Australia and Italy suffered the steepest customer losses in 2020 across both 
+new and returning customers — highest priority for win-back campaigns. France 
+showed the most resilience with the smallest decline in returning customers 
+(-10%), though its small customer base limits the conclusion. US dominates 
+volume and loyalty — protecting this market is non-negotiable.
 
 **Product margin opportunity is underutilized**
 Computers leads revenue at $19.3M but carries only average profit margin (~54%). 
