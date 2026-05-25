@@ -35,8 +35,6 @@ dashboard with DAX measures.
 
 ## Key Findings
 
-## Key Findings
-
 **Overview**
 - Order count declined from 2019 while AOV remained stable — customer loss, not reduced spending, is the primary driver of revenue decline.
 - Online revenue share is minimal across all markets — significantly underutilized relative to in-store.
