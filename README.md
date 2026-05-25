@@ -35,49 +35,66 @@ dashboard with DAX measures.
 
 ## Key Findings
 
-**Revenue is concentrated in a small active base**
-Loyal Customers represent ~28% of the customer base 
-but generate ~44% of total revenue ($24.6M). Losing even a small portion of 
-this group has outsized revenue impact. Regular recency monitoring and 
-proactive outreach every 2 quarters is critical to protect this base.
+## Key Findings
 
-**A large dormant base represents recoverable value**
-Hibernating customers make up the 2nd largest segment (3,135 customers) with 
-$9.1M in historical spend — all currently inactive. Must Keep (135 customers) 
-is smaller but carries the highest average spend alongside Champions, making 
-it the highest ROI recovery target despite its size.
+**Overview**
+- Order count declined from 2019 while AOV remained stable — customer loss, not reduced spending, is the primary driver of revenue decline.
+- Online revenue share is minimal across all markets — significantly underutilized relative to in-store.
+- Returning customers held up better than new customers in 2020 — retention base proved more resilient than acquisition during the pandemic.
 
-**The business cannot retain new customers**
-92% of new customers do not return in their first quarter. Average 1-quarter 
-retention is only 7.75% — meaning the business continuously acquires customers 
-it cannot keep. This is a structural retention failure that predates 2020 and 
-exists across all cohort years, not just a pandemic effect.
+**Demographics**
+- 55+ accounts for 46% of customers and 46% of revenue — volume-driven, not higher spending, as AOV is consistent across age groups.
+- Gender split is nearly equal across both revenue and customer count — no meaningful difference.
+- 18-24 is the smallest group but AOV is comparable to older groups — long-term loyalty potential if acquisition is prioritized.
 
-**At Risk customers have a recoverable but time-sensitive window**
-At Risk customers show only 2.82% retention in quarter 1 but rise to 7–11% 
-from quarters 2–4. This means immediate outreach is ineffective — the optimal 
-intervention window is 2–4 quarters after last purchase, before they slide 
-permanently into Hibernating.
+**Market**
+- US: 5,706 customers, $29.87M revenue, return rate 58.69% — highest loyalty in the system.
+- Australia: only 780 customers, $2.71M, return rate 33.16% — lowest loyalty but AOV higher than US ($2,291 vs $2,100).
+- Online/In-store ratio ranges 1:3.6–4.4 across all markets — universal dependence on physical stores.
+- Revenue mix stable over time — US consistently ~54%, no market emerged as an alternative growth driver.
 
-**Online is critically underutilized**
-Online revenue accounts for a small fraction of total revenue. Given that 
-physical retail was the primary victim of the 2020 decline, online represents 
-the most actionable channel for both customer acquisition and retention — 
-particularly for younger demographics and markets like Australia where new 
-customer proportion is highest.
+**Product**
+- Computers: 7,459 customers, $2,587 avg spend per customer — leads in both volume and value.
+- Music/Movies & Audio Books: highest profit margin (57.14% vs Computers 54.54%) but avg spend only $531 per customer — high-margin, underutilized.
+- Computers and Cell phones lead unit sales (44,151 and 31,477 respectively).
+- Revenue mix largely stable except Home Appliances (declined from 29% to ~8%) and Computers (grew from 21% to ~43% through the pandemic). Games and Toys consistently negligible (<2%).
 
-**Market resilience varies significantly**
-Australia and Italy suffered the steepest customer losses in 2020 across both 
-new and returning customers — highest priority for win-back campaigns. France 
-showed the most resilience with the smallest decline in returning customers 
-(-10%), though its small customer base limits the conclusion. US dominates 
-volume and loyalty — protecting this market is non-negotiable.
+**Segmentation**
+- Loyal Customers: 3,241 customers, $24.58M (44% of total revenue) — volume-driven, highest priority to protect.
+- Must Keep: only 135 customers but avg spending $11,001 — highest in the system, greatest recovery ROI.
+- Promising: 561 customers, AOV $4,443 — higher than both Champions ($2,569) and Must Keep ($2,320). Conversion is the priority.
+- At Risk: 1,163 customers, $8M revenue, avg order value $2,536 — high-value customers actively slipping.
+- Hibernating: 3,135 customers, $9.1M — 2nd largest segment and 2nd highest revenue, all inactive. Poor retention has already cost significant revenue potential.
 
-**Product margin opportunity is underutilized**
-Computers leads revenue at $19.3M but carries only average profit margin (~54%). 
-Music, Movies & Audio Books and Cameras carry the highest margins (~57%) but 
-generate significantly lower revenue — high-margin categories that remain 
-underutilized relative to their potential.
+**Retention**
+- ~90-92% of customers do not return within 1–8 quarters — systemic retention failure across all cohort years.
+- Retention improved year over year, peaking in 2018-2019 (avg 11-13%), before collapsing to ~3% in 2020 due to the pandemic.
+- Retention improves within cohorts over time — avg rises from 7.75% at Q1 to 10.27% at Q8, suggesting customers who do return become more loyal.
+- Segment-level retention varies significantly — Champions peaked in 2019 but experienced the steepest decline in 2020.
+
+---
+
+## Strategy
+
+**PROTECT — Champions and Loyal Customers**
+- Exclusive offers and early product access to maintain engagement.
+- Recency-based alerts every 2 quarters — proactive outreach before they slip.
+- Prioritize US market and 55+ demographic across both segments.
+- Leverage Computers (high demand, high revenue) and Music/Movies & Audio Books (stable revenue, highest margin) as key offer categories.
+
+**WIN BACK — At Risk and Must Keep**
+- At Risk: optimal outreach window is 2–4 quarters after last purchase (7–13% retention rate). Introduce new products or relevant category offers to re-engage.
+- Must Keep: small group, high value — personalize outreach, leverage online channel, and offer loyalty program invitations. Female sub-segment shows higher order frequency despite lower count — worth targeting specifically.
+
+**REACTIVATE — Hibernating**
+- Use online channel to reach dormant customers.
+- Lead with Music/Movies and Cameras as entry points — highest profit margins reduce reactivation cost.
+- Customers who became Hibernating within 1–4 quarters still have meaningful return probability — prioritize this sub-group with personalized discounts and new product introductions.
+
+**DEVELOP — New, Promising and Potential Loyal**
+- New and Promising: engage within the first year while retention rate is still stable. Regular email or SMS touchpoints about loyalty programs — prioritize retention over revenue extraction.
+- Potential Loyal: large group with moderate spend — loyalty programs and targeted offers to encourage repeat purchases and increase share of wallet.
+- Online channel: expand utilization to broaden reach, particularly for the 18–34 demographic with the strongest long-term growth potential.
 
 ## Tools
 - **MySQL** — data cleaning, RFM scoring, cohort retention analysis
